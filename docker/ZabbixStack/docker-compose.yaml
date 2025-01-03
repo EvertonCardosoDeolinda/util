@@ -1,0 +1,65 @@
+version: "2.4"
+services:
+
+    agent:
+      container_name: server-agent
+      hostname: server-agent
+      image: 'zabbix/zabbix-agent2:ubuntu-6.4-latest'
+      restart: unless-stopped
+      volumes:
+        - /etc/timezone:/etc/timezone:ro
+        - /etc/localtime:/etc/localtime:ro
+        - ./agent/zabbix-agent.d:/etc/zabbix/zabbix_agentd.d
+        - ./agent/var-lib-zabbix:/var/lib/zabbix
+      env_file:
+        - ./agent/.env/zabbix-agent2.env
+      depends_on:
+        - server
+        - front
+
+    front:
+      container_name: zabbix-front
+      hostname: zabbix-front
+      image: 'zabbix/zabbix-web-nginx-mysql:ubuntu-6.4-latest'
+      restart: unless-stopped
+      ports:
+        - '8080:8080'
+        - '8443:8443'
+      volumes:
+        - /etc/timezone:/etc/timezone:ro
+        - /etc/localtime:/etc/localtime:ro
+        - ./front/etc-ssl:/etc/ssl/nginx:ro
+        - ./front/etc-zabbix-certs:/etc/zabbix/web/certs:ro
+      depends_on:
+        - server
+      env_file:
+        - ./front/.env/zabbix-front.env
+
+    server:
+      container_name: zabbix-server
+      hostname: zabbix-server
+      image: 'zabbix/zabbix-server-mysql:ubuntu-6.4-latest'
+      restart: unless-stopped
+      volumes:
+        - /etc/timezone:/etc/timezone:ro
+        - /etc/localtime:/etc/localtime:ro
+        - ./server/usr-lib-zabbix:/usr/lib/zabbix
+        - ./server/var-lib-zabbix:/var/lib/zabbix
+      depends_on:
+        - db
+      env_file:
+        - ./server/.env/zabbix-server.env
+
+    db:
+      container_name: zabbix-db
+      hostname: zabbix-db
+      image: 'mariadb:10.10-jammy'
+      restart: unless-stopped
+      volumes:
+        - /etc/timezone:/etc/timezone:ro
+        - /etc/localtime:/etc/localtime:ro
+        - ./db/data:/var/lib/mysql
+        - ./db/conf.d:/etc/mysql/conf.d
+      env_file:
+        - ./db/.env/mariadb.env
+

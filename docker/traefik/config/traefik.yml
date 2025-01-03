@@ -1,0 +1,84 @@
+global:
+  checkNewVersion: false
+  sendAnonymousUsage: false
+
+log:
+  level: INFO  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: common  # common, json, logfmt
+  filePath: /logs/traefik.log
+
+accessLog:
+  format: common  # common, json, logfmt
+  filePath: /logs/access.log
+
+api:
+  dashboard: true
+  insecure: true  # DEV AND TEST ONLY
+
+entryPoints:
+  web:
+    address: :80
+    # Redirect to HTTPS
+    # ---
+    # http:
+    #   redirections:
+    #     entryPoint:
+    #       to: https
+    #       scheme: https
+
+  websecure:
+    address: :443
+
+# Configure your CertificateResolver here...
+# ---
+# certificatesResolvers:
+#   staging:
+#     acme:
+#       email: your-email@example.com
+#       storage: /etc/traefik/certs/acme.json
+#       caServer: "https://acme-staging-v02.api.letsencrypt.org/directory"
+#       httpChallenge:
+#         entryPoint: web
+#
+#   production:
+#     acme:
+#       email: your-email@example.com
+#       storage: /etc/traefik/certs/acme.json
+#       caServer: "https://acme-v02.api.letsencrypt.org/directory"
+#       httpChallenge:
+#         entryPoint: web
+
+# Local cert files Stores
+# tls:
+#   stores:
+#     default:
+#       defaultCertificate:
+#         certFile: /etc/traefik/certs/cert.pem
+#         keyFile: /etc/traefik/certs/cert-key.pem
+# Disable TLS version 1.0 and 1.1
+#   options:
+#     default:
+#       minVersion: VersionTLS12
+
+providers:
+  docker:
+    exposedByDefault: false
+  file:
+    # watch for dynamic configuration changes
+    directory: /etc/traefik
+    watch: true
+
+serversTransport:
+  insecureSkipVerify: false
+
+#if you need https to backend you need to set at least the serverName (rootCAs only for custom CA certificate) to the same of certificate SAN since docker ip can vary a lot. On docker service label add:
+#       - "traefik.http.services.myservice.loadbalancer.serversTransport=mytrasport@file"
+#       - "traefik.http.services.myservice.loadbalancer.server.scheme=https"
+#       - "traefik.http.services.myservice.loadbalancer.server.port=443"
+# ref.: https://github.com/traefik/traefik/issues/7454
+
+#http:
+#  serversTransports:
+#    mytransport:
+#      serverName: myservice.local.lan
+#      rootCAs: /certs/local.lan.CA.crt
